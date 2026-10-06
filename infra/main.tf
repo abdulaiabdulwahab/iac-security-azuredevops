@@ -37,10 +37,12 @@ resource "azurerm_storage_account" "logs" {
   account_tier             = "Standard"
   account_replication_type = "LRS"
 
-  https_traffic_only_enabled       = false
-  allow_nested_items_to_be_public  = true
-  shared_access_key_enabled        = true
-  public_network_access_enabled    = true
+  https_traffic_only_enabled       = true
+  allow_nested_items_to_be_public  = false
+  shared_access_key_enabled        = false
+  public_network_access_enabled    = false
+  default_to_oauth_authentication  = true
+  cross_tenant_replication_enabled = false
 
   min_tls_version = "TLS1_2"
 
@@ -76,7 +78,7 @@ resource "azurerm_network_security_rule" "ssh" {
   destination_port_range      = "22"
 
   # SECURITY PROBLEM:
-  source_address_prefix       = "*"
+  source_address_prefix       = "var.management_cidr"
 
   destination_address_prefix  = "*"
 
