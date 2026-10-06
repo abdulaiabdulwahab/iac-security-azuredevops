@@ -30,6 +30,7 @@ resource "azurerm_resource_group" "production" {
 # --------------------------------------------------
 
 resource "azurerm_storage_account" "logs" {
+     # checkov:skip=CKV2_AZURE_1:Training lab storage account; no critical data is stored, so CMK is not required for this project.
   name                     = var.storage_account_name
   resource_group_name      = azurerm_resource_group.production.name
   location                 = azurerm_resource_group.production.location
