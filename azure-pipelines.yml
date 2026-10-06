@@ -1,0 +1,110 @@
+# ---------------------------------------------------------
+# IaC Security Pipeline
+#
+# Purpose:
+# Scan Terraform before infrastructure is allowed to
+# proceed further through CI/CD.
+# ---------------------------------------------------------
+
+trigger:
+  branches:
+    include:
+      - main
+
+  paths:
+    include:
+      - infra/*
+      - azure-pipelines.yml
+
+pool:
+  vmImage: ubuntu-latest
+
+stages:
+
+# =========================================================
+# STAGE 1 - IAC SECURITY
+# =========================================================
+
+- stage: IaCSecurity
+  displayName: "Infrastructure as Code Security"
+
+  jobs:
+
+  - job: ScanIaC
+    displayName: "Scan Terraform"
+
+    steps:
+
+    # -----------------------------------------------------
+    # Download repository files to the build agent.
+    # -----------------------------------------------------
+
+    - checkout: self
+
+      displayName: "Checkout repository"
+
+
+    # -----------------------------------------------------
+    # Microsoft Security DevOps
+    #
+    # categories: IaC
+    # Only run infrastructure-as-code related analyzers.
+    #
+    # break: true
+    # Fail the task if HIGH severity findings are detected.
+    #
+    # publish: true
+    # Publish SARIF security results.
+    # -----------------------------------------------------
+
+    - task: MicrosoftSecurityDevOps@1
+
+      displayName: "Microsoft Security DevOps - IaC Scan"
+
+      inputs:
+
+        categories: 'IaC'
+
+        break: true
+
+        publish: true
+
+        artifactName: 'CodeAnalysisLogs'
+
+
+# =========================================================
+# STAGE 2 - SECURITY PASSED
+#
+# This deliberately doesn't deploy anything.
+#
+# In a full pipeline this would normally be followed by:
+#
+# terraform plan
+# approval
+# terraform apply
+#
+# The point of this project is specifically IaC Security.
+# =========================================================
+
+- stage: SecurityPassed
+
+  displayName: "Security Gate Passed"
+
+  dependsOn: IaCSecurity
+
+  condition: succeeded()
+
+  jobs:
+
+  - job: Approved
+
+    steps:
+
+    - bash: |
+
+        echo "======================================"
+        echo "IaC security checks passed."
+        echo "Infrastructure may proceed."
+        echo "======================================"
+
+      displayName: "Confirm security gate"
